@@ -34,12 +34,13 @@ FLAGS = None
 def main(_):
   # Import data
   mnist = input_data.read_data_sets(FLAGS.data_dir)
-
+  # log directory
+  
   # Create the model
-  x = tf.placeholder(tf.float32, [None, 784])
-  W = tf.Variable(tf.zeros([784, 10]))
-  b = tf.Variable(tf.zeros([10]))
-  y = tf.matmul(x, W) + b
+  x = tf.placeholder(tf.float32, [None, 784])  # unlimited images with 28*28 pixel each
+  W = tf.Variable(tf.zeros([784, 10])) # 28*28 image for each row from 0 to 9 
+  b = tf.Variable(tf.zeros([10])) 
+  y = tf.matmul(x, W) + b  # y=W*x+b
 
   # Define loss and optimizer
   y_ = tf.placeholder(tf.int64, [None])
@@ -59,16 +60,28 @@ def main(_):
   sess = tf.InteractiveSession()
   tf.global_variables_initializer().run()
   # Train
+  train_writer = tf.summary.FileWriter( "C:/Users/handa_k/AppData/Local/Temp/mnist", sess.graph)
+  counter=0
   for _ in range(1000):
-    batch_xs, batch_ys = mnist.train.next_batch(100)
-    sess.run(train_step, feed_dict={x: batch_xs, y_: batch_ys})
+    counter+=1
+    merge = tf.summary.merge_all()
+    summary=sess.run(merge)
+    train_writer.add_summary(summary,counter)
+    batch_xs, batch_ys = mnist.train.next_batch(100)  # next_batch is a method of the DataSet class, mnist.train is an instance of class DataSet
+    sess.run(train_step, feed_dict={x: batch_xs, y_: batch_ys}) # batch_xs, is the number of images,batch_ys is the label  
+	# merging for board
+    
 
   # Test trained model
-  correct_prediction = tf.equal(tf.argmax(y, 1), y_)
+  correct_prediction = tf.equal(tf.argmax(y, 1), y_) 
+  # did not understand this. Argmax calculate the index of maximum value and it can be compared with y_  ?
   accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+  # histogram
+  tf.summary.histogram("Correct Predictions", correct_prediction)
   print(sess.run(
       accuracy, feed_dict={
-          x: mnist.test.images,
+          x: mnist.test.images,    # what kind of instances are mnist.test.iamges and mnist.tets.labels and to which class it belongs to,
+                                     # what exactly the meaning here.		  
           y_: mnist.test.labels
       }))
 
